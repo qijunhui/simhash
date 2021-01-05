@@ -12,3 +12,4 @@ RAW_DATA_PATH = os.path.join(DATA_PATH, "raw_data.csv")  # 原始数据
 INDEX2WORDS_PATH = os.path.join(DATA_PATH, "index2words.json")  # 处理后数据
 WORD2IDF_PATH = os.path.join(DATA_PATH, "word2idf.json")  # idf模型
 INDEX2SIMHASH_PATH = os.path.join(DATA_PATH, "index2simhash.csv")  # simhash结果
+SIMILAR_PATH = os.path.join(DATA_PATH, "similar.csv")  # 相似结果
