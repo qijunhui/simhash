@@ -164,6 +164,86 @@ class SimhashSearch(object):
                     self.similar.append((index_a, index_b, hanming))
         self.save()
 
+    def binary_index_6part_3bin(self):
+        # 检索海明距离在3以下的 建立四层索引 前三层是字典 第四层是列表 划分六段(5,5,5,5,6,6) 三段相同
+        # 建立索引
+        for index_first in range(0, 20):
+            self.simhash_index[index_first] = {}
+            if index_first in [0, 1, 4, 10]:
+                for index_second in range(2 ** 5):
+                    self.simhash_index[index_first][index_second] = {}
+                    for index_third in range(2 ** 5):
+                        self.simhash_index[index_first][index_second][index_third] = {}
+                        for index_fourth in range(2 ** 5):
+                            self.simhash_index[index_first][index_second][index_third][index_fourth] = []
+            elif index_first in [2, 3, 5, 6, 7, 8, 11, 12, 13, 14, 16, 17]:
+                for index_second in range(2 ** 5):
+                    self.simhash_index[index_first][index_second] = {}
+                    for index_third in range(2 ** 5):
+                        self.simhash_index[index_first][index_second][index_third] = {}
+                        for index_fourth in range(2 ** 6):
+                            self.simhash_index[index_first][index_second][index_third][index_fourth] = []
+            else:
+                for index_second in range(2 ** 5):
+                    self.simhash_index[index_first][index_second] = {}
+                    for index_third in range(2 ** 6):
+                        self.simhash_index[index_first][index_second][index_third] = {}
+                        for index_fourth in range(2 ** 6):
+                            self.simhash_index[index_first][index_second][index_third][index_fourth] = []
+        # 添加索引
+        for index, simhash in self.index2simhash.items():
+            simhash_part = (
+                int("0b" + simhash[2:7], 2),
+                int("0b" + simhash[7:12], 2),
+                int("0b" + simhash[12:17], 2),
+                int("0b" + simhash[17:22], 2),
+                int("0b" + simhash[22:28], 2),
+                int("0b" + simhash[28:34], 2),
+            )
+            index_first = 0
+            for second_temp in range(0, 4):
+                for third_temp in range(second_temp + 1, 5):
+                    for fourth_temp in range(third_temp + 1, 6):
+                        index_second = simhash_part[second_temp]
+                        index_third = simhash_part[third_temp]
+                        index_fourth = simhash_part[fourth_temp]
+                        self.simhash_index[index_first][index_second][index_third][index_fourth].append(index)
+                        index_first += 1
+        print("索引建立完毕")
+
+    def fit_6part_3bin(self):
+        # 建立索引
+        self.binary_index_6part_3bin()
+        # 检索海明距离在3以下的
+        for index_a, simhash_a in self.index2simhash.items():
+            # 取出待比较项
+            compared = set()
+            simhash_part = (
+                int("0b" + simhash_a[2:7], 2),
+                int("0b" + simhash_a[7:12], 2),
+                int("0b" + simhash_a[12:17], 2),
+                int("0b" + simhash_a[17:22], 2),
+                int("0b" + simhash_a[22:28], 2),
+                int("0b" + simhash_a[28:34], 2),
+            )
+            index_first = 0
+            for second_temp in range(0, 4):
+                for third_temp in range(second_temp + 1, 5):
+                    for fourth_temp in range(third_temp + 1, 6):
+                        index_second = simhash_part[second_temp]
+                        index_third = simhash_part[third_temp]
+                        index_fourth = simhash_part[fourth_temp]
+                        compared.update(self.simhash_index[index_first][index_second][index_third][index_fourth])
+                        index_first += 1
+            # 比较
+            for index_b in compared:
+                if index_b <= index_a:
+                    continue
+                hanming = self.get_hanming(int(simhash_a, 2), int(self.index2simhash[index_b], 2))
+                if hanming <= 3:
+                    self.similar.append((index_a, index_b, hanming))
+        self.save()
+
 
 if __name__ == "__main__":
     import time
@@ -181,4 +261,9 @@ if __name__ == "__main__":
     st = time.time()
     simhash_search = SimhashSearch()
     simhash_search.fit_5part_3bin()
+    print(time.time() - st)
+
+    st = time.time()
+    simhash_search = SimhashSearch()
+    simhash_search.fit_6part_3bin()
     print(time.time() - st)
